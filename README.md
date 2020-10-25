@@ -1,6 +1,10 @@
 # OnemoonStudio Blog
 
-## 📝 Repository For [Blog](https://onemoonstudio.tistory.com/)
+### 📝 Repository For [Blog](https://onemoonstudio.tistory.com/)
 
-마크다운 형식으로 하나씩 기록을 정리하려고 합니다.
+블로그에 올리는 글을 하나씩 정리하고 기록을 남기는 공간
+
+### History
+
+[[ 20.10.25 ] Codable](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/Codable.md)
 
