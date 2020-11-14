@@ -7,4 +7,5 @@
 ### History
 
 [[ 20.10.25 ] Codable](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/Codable.md)
+[[ 20.11.14 ] DecodeMaster](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/DecodeMaster.md)
 
