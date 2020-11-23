@@ -10,3 +10,5 @@
 
 [[ 20.11.14 ] DecodeMaster](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/DecodeMaster.md)
 
+[[ 20.11.23 ] EncodeMaster](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/EncodeMaster.md)
+
