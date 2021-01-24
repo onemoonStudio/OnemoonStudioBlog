@@ -12,3 +12,5 @@
 
 [[ 20.11.23 ] EncodeMaster](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/EncodeMaster.md)
 
+[[ 20.01.24 ] Reducing Dynamic Dispatch](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/ReducingDynamicDispatch.md)
+
