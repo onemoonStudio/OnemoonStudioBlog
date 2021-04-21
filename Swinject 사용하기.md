@@ -4,8 +4,6 @@
 
 이번 포스팅에서는 문서에서 중요하다고 생각한 부분들을 추리고, 예제 및 문서의 코드를 직접 활용하면서 어떻게 사용했는지 설명 할 생각이다. 문서의 양이 얼마 되지 않으니 한번 전체를 읽어보고 다시 와서 핵심을 파악하는 것을 추천한다. 
 
-
-
 ## Container
 
 DI Container 로 이해하면 되며, 사실상 Swinject의 핵심이라고 할 수 있다. Container 에 원하는 serviceType을 register 하면 된다. 이후에 필요한 곳에서 resolve를 통해 해당 타입에 맞는 객체가 생성되어 나온다. 샘플 프로젝트에서 예시를 가져왔다.
@@ -221,44 +219,196 @@ container 가 thread safe 하지만 이는 `resolve`에만 해당하는 이야�
 
 
 ## Example - CocktailMaster
+<div>
+<img src="/Users/hyeontaekim/Documents/Dev/GitHub/OnemoonStudioBlog/images/swinject_cm_1.PNG" style="zoom:30%;" />
+<img src="/Users/hyeontaekim/Documents/Dev/GitHub/OnemoonStudioBlog/images/swinject_cm_2.PNG" style="zoom:30%;" />
+<img src="/Users/hyeontaekim/Documents/Dev/GitHub/OnemoonStudioBlog/images/swinject_cm_3.PNG" style="zoom:30%;" />
+</div>
+첫번째 화면에서는 어떤 알파벳으로 시작하는 칵테일을 볼 것인지를 선택한다. 이 셀을 누르게 되면 두번째 화면으로 넘어간다.
 
-Swinject, SwinjectStoryboard를 사용해서 칵테일을 검색하고 이를 만들기 위해서 어떤 요소들이 필요한지 확인할 수 있는 간단한 예제를 만들었다. [여기](https://github.com/onemoonStudio/CocktailMaster)에서 확인할 수 있으며 [태그](https://github.com/onemoonStudio/CocktailMaster/tags)를 확인해보면 Container만을 사용하는 seperatedContainer 태그와 Assembly를 활용한 assembly 태그가 있다. 각각 다운받은 뒤 pod install 을 실행하고 확인해볼 수 있다.
+두번째 화면은 해당 알파벳으로 시작하는 칵테일 리스트를 볼 수 있다. 여기에서 셀을 누르게 되면 세번째 화면으로 넘어간다.
 
-
-
-
-
-
-
-
-
-
+세번째 화면에서는 칵테일의 디테일 요소를 보여준다. ingredient 또한 확인하여 어떻게 구성되어있는지 확인할 수 있다.
 
 
 
+칵테일을 검색하고 이를 만들기 위해서 어떤 요소들이 필요한지 확인할 수 있는 간단한 예제를 만들었다. MVVM 구조를 따르도록 하였으며 Swinject, SwinjectStoryboard를 사용하여서 어플리케이션을 구성하였다. [여기](https://github.com/onemoonStudio/CocktailMaster)에서 예제를 확인할 수 있으며 [태그](https://github.com/onemoonStudio/CocktailMaster/tags)를 확인해보면 Container만을 사용하는 `seperatedContainer 태그`와 Assembly를 활용한 `assembly 태그`가 있다. 각각 다운받은 뒤 pod install 을 하고 앱을 실행하여 확인해볼 수 있다.
+
+### SwinjectStoryboard 
+
+Storyboard 에 있는 뷰컨트롤러를 만들 때에도 dependency를 관리하고 싶은 경우 활용하면 좋다. SceneDelegate.swift 에 있는 코드를 가져왔다.
+
+```swift
+lazy var initialContainer: Container = {
+  let container = Container()
+  container.register(MainViewModeling.self) { _ in 
+		return MainViewModel() 
+	}
+  container.storyboardInitCompleted(MainViewController.self) { (r, c) in 
+		// initCompleted closure
+		c.viewModel = r.resolve(MainViewModeling.self) 
+	}
+  return container
+}()
+// ....
+let mainViewController = SwinjectStoryboard
+													.create(name: "Main", bundle: nil, container: initialContainer)
+													.instantiateViewController(withIdentifier: "MainViewController")
+```
+
+MainViewController 에는 MainViewModel이 필요한데 이 뷰모델은 MainViewModeling 이라는 프로토콜을 채택해야 한다. 또한 MainViewController 에서는 구현체인 MainViewModel 이 아니라 MainViewModeling을 참조하도록 만들었다. 
+
+MainViewController가 생성되면 자동으로 MainViewModel이 생성되어 injection이 된다. 이 과정을 아래와 같은 단계로 풀어서 설명할 수 있다.
+
+1. MainViewModeling 을 register 한다. resolve를 하게되면 MainViewModel instance가 생성될 것이다.
+2. SwinjectStoryboard.create 를 통해서 만들고자 하는 Storyboard 그리고 identifier 를 연결한다. 이때 container 인자에 사용하고자 하는 container 를 등록한다.
+3. 2에서 사용한 container 에 container.storyboardInitCompleted를 사용하여 initCompleted closure 에 viewModel 을 property injection 형태로 넣어준다.
+
+위와 같은 과정을 거치면 MainViewController를 만들었을 때 자동으로 ViewModel 이 injection 된 ViewController instance 를 얻을 수 있다.
+
+### SwinjectStoryboard 단점
+
+한가지 아쉬웠던 점은 SwinjectStoryboard.create 를 통해서 인자를 넘길 수 없다는 점이었다. 예를 들어서 MainViewModel에 `id: String`가 필요하다고 하자 SwinjectStoryboard.create 단계에서 id 인자를 넘기면 MainViewModeling을 resolve 할 때 이를 넣어주는 형태가 되었으면 조금 더 활용도가 높았을 텐데 하는 아쉬움이 있다. 문서를 찾아봤지만 이렇다 할 해법이 나와있지 않아 굉장히 아쉬웠다.
+
+따라서 만약 ViewModel을 만들 때 어떤 인자가 필요하다면 initCompleted 를 사용하는 방식이 아닌, ViewController와 ViewModel을 각각 resolve 한 뒤 직접 injection 하는 방식으로 사용하거나, viewModel의 ObjectScope를 변경하여 관리하는 방식으로 사용해야 한다. 아래 예제에 설명이 나와있다.
+
+## tag - seperatedContainer
+
+위에서 말했다시피 예제 코드를 보면 두가지의 태그가 있다 이중 첫번째 seperatedContainer 에 대한 간단한 설명을 하고자 한다. seperatedContainer는 필요한 경우 viewModel에서 container 를 만들어서 이를 활용하는 방식으로 어플리케이션을 구성하였다. 아래의 코드는 MainViewModel.swift 에서의 코드이다.
+
+```swift
+protocol MainViewModeling: BaseViewModeling {
+    var alphabetListRelay: BehaviorRelay<[String]> { get }
+    var cocktailNameListViewControllerRelay: PublishRelay<CocktailNameListViewController> { get }
+    func targetAlphabet(at indexPath: IndexPath) -> String
+    func didTapAlphabetCell(at indexPath: IndexPath)
+}
+
+final class MainViewModel: BaseViewModel, MainViewModeling {
+    let alphabetListRelay = BehaviorRelay<[String]>(value: [])
+    let cocktailNameListViewControllerRelay = PublishRelay<CocktailNameListViewController>()
+    
+    let container = Container()
+    
+    override init() {
+        super.init()
+        setAlphabetList()
+        setContainer()
+    }
+    
+    private func setAlphabetList() {
+			// ...
+    }
+    
+    private func setContainer() {
+        container.register(CocktailNameListViewModeling.self) { (_, alphabet: String) in
+            return CocktailNameListViewModel(alphabet)
+        }
+        
+        container.storyboardInitCompleted(CocktailNameListViewController.self) { (r, c) in
+            // do somthing if u want ...
+        }
+    }
+    
+    func targetAlphabet(at indexPath: IndexPath) -> String {
+        // ...
+    }
+    
+    func didTapAlphabetCell(at indexPath: IndexPath) {
+        let viewModel = container.resolve(CocktailNameListViewModeling.self, argument: targetAlphabet(at: indexPath))
+        guard let viewController = SwinjectStoryboard.create(name: "Main", bundle: nil, container: container).instantiateViewController(withIdentifier: "CocktailNameListViewController") as? CocktailNameListViewController else { return }
+        viewController.viewModel = viewModel
+        
+        cocktailNameListViewControllerRelay.accept(viewController)
+    }
+}
+
+```
+
+SwinjectStoryboard를 설명하는 단계에서 나온 MainViewModeling , MainViewModel이다. MainViewModeling은 BaseViewModeling protocol을 채택하여야 한다.
+
+이제 container를 보도록 하자 container를 만들고 init단계에서 setContainer()를 호출하여 register 를 하였다. 이후 MainViewController 에서 셀을 누르는 경우 didTapAlphabetCell(at: IndexPath) 가 실행된다. 여기서 다음 단계인 CocktailNameListViewController 를 만들기 위한 작업이 이루어진다.
+
+CocktailNameListViewController에 필요한 ViewModel protocol은 CocktailNameListViewModeling protocol이며, 구현체가 CocktailNameListViewModel이 된다. 이때 CocktailNameListViewModel에는 리스트를 가져올 알파벳을 알아야 하기 때문에 인자로 alphabet을 받게 된다. 
+
+따라서 viewModel을 따로 resolve 하면서 targetAlphabet을 넣어준 다음, SwinjectStoryboard.create 를 통해서 만들어진 ViewController 에 만들어진 viewModel을 넣었다. 만들어진 ViewController는 relay에 넘겨서 navigationPush를 할 수 있도록 하였다.
+
+### Container의 단점?
+
+사용은 편하게 하였으나 확장성에 의문이 생겼다. 만약 다른 곳에서 register 한 요소들을 가져오려면 어떻게 해야할까? 혹은 여기서 등록한 요소를 다른곳에서 어떻게 활용할 수 있을까?
+
+[Container Hierarchy](https://github.com/Swinject/Swinject/blob/master/Documentation/ContainerHierarchy.md) 를 살펴보면 parent - child 형태로 연결된 container에서 parent container 내부에 등록된 요소들은 child container 에서 resolve 가 가능하다. ( 반대는 안된다. ) 이를 활용하면서 object scope를 적절하게 사용한다면 어느 정도 확장성에 대한 해결이 될것이라고 생각한다.
+
+## tag - assembly
+
+위에서 말한 container hierarchy 를 사용하면 마치 클래스의 상속처럼 parent - child 형식으로 범위를 넓혀나갈 수 있을 것 같다. 하지만 프로토콜과 같이 어디서든 쉽게 붙였다 떼었다 할 수 있으면 조금 더 활용도가 높을 것 같다는 생각이 들었다. 문서를 살펴보니 assembly protocol이 있었고, parent-child hierarchy를 사용하는 것 또한 가능했으며, 이를 프로젝트에 직접 활용해보았다.
+
+```swift 
+// MainViewModel.swift
+class MainAssembly: Assembly {
+    func assemble(container: Container) {
+        container.register(CocktailNameListViewModeling.self) { (_, alphabet: String) in
+            return CocktailNameListViewModel(alphabet)
+        }
+    }
+}
+// CocktailNameListViewModel.swift
+class CocktailListAssembly: Assembly {
+    func assemble(container: Container) {
+        container.register(CocktailDetailViewModeling.self) { (_, id: String) in
+            // 제대로 assemble이 되었는지 확인하는 로그
+            let test = container.resolve(CocktailNameListViewModeling.self, argument: "z")
+            if let test = test as? CocktailNameListViewModel {
+                print("Integration")
+                print(test.startedAlphabet)
+            } else {
+                print("not Integrated")
+            }
+            
+            return CocktailDetailViewModel(id)
+        }
+    }
+}
+// 실제 사용하는 코드
+let assembler = Assembler([MainAssembly(), CocktailListAssembly()])
+...
+let viewModel = assembler.resolver ~> (CocktailDetailViewModeling.self, argument: selectedCocktail.idDrink)
+// assembler.resolver.resolve(...) 과 동일하다.
+// ~> 는 SwinjectAutoregistration을 받으면 사용할 수 있다.
+```
+
+먼저 SwinjectAutoregistration를 사용해서 ~> 라는 기호를 사용했는데 여기에서는 특별한 의미가 없고 단순 resolve를 저렇게 표현했다고 생각하면 된다. 관심이 있다면 해당 라이브러리도 참고 하는것을 추천한다.
+
+제일 중요하게 봐야될 키워드는 `Assembly` 그리고 `Assembler` 이다. Assembly는 서로 다른 파일에 구현이 되어있다. 그리고 사용이 되는 코드에 Assembler 를 보면 MainAssembly 그리고 CocktailListAssembly 두개를 합친 것을 볼 수 있다. 그리고 CocktailListAssembly 에서 CocktailDetailViewModeling를 resolve 할때 MainAssembly에 등록된 프로토콜이 제대로 resolve 되는지 확인하기 위한 로그도 남겨놓았다.
+
+개인적으로는 Assembly를 사용하는 것이 Container 를 사용하는 것 보다 조금 더 확장성이 있다고 느껴진다. 어떤 파일에 있던 가져올 수 있다면 쉽게 붙였다 떼는것이 가능할 뿐 더러, hierarchy 그리고 objectScope 모두 지원한다. 
 
 
 
+## 마치며
+
+글이 이렇게 길어질지는 몰랐는데 생각보다 설명할 부분이 많았던 것 같다. 이 내용을 토대로 앞으로 프로젝트를 Assembly를 활용하여 관리할 생각이다. 또한 이번에 SwinjectAutoregistration를 제대로 활용하지는 않았는데 이 또한 활용하면 재밌을 것 같다는 생각이 들었다. 한번 활용해보고 예제를 만들어 tag 를 추가하게 된다면 이 포스트에 사용법을 적어놓을 예정이다. 많은 도움이 되었기를 바라며 마치겠다. 👏
+
+( 언제든지 피드백은 환영입니다. 👍🏻 )
 
 
 
+## Reference
 
+[직접 만든 예제 - CocktailMaster](https://github.com/onemoonStudio/CocktailMaster)
 
+[예제에서 사용한 API - CocktailDB](https://www.thecocktaildb.com/)
 
+[Swinject](https://github.com/Swinject/Swinject)
 
+[Swinject - Document](https://github.com/Swinject/Swinject/tree/master/Documentation)
 
+[SwinjectStoryboard](https://github.com/Swinject/SwinjectStoryboard)
 
+[SwinjectAutoRegistration](https://github.com/Swinject/SwinjectAutoregistration)
 
+[laywenderlich - Swinject Tutorial for iOS: Getting Started](https://www.raywenderlich.com/17-swinject-tutorial-for-ios-getting-started)
 
-
-
-
-
-
-
-
-
-
-
+[Swinject in practice](https://felginep.github.io/2019-02-05/swinject-in-practice)
 
 
