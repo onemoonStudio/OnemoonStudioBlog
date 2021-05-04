@@ -12,11 +12,13 @@
 
 [[ 20.11.23 ] EncodeMaster](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/EncodeMaster.md)
 
-[[ 20.01.24 ] Reducing Dynamic Dispatch](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/ReducingDynamicDispatch.md)
+[[ 21.01.24 ] Reducing Dynamic Dispatch](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/ReducingDynamicDispatch.md)
 
-[[ 20.03.18 ] Responder Chain](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/ResponderChain.md)
+[[ 21.03.18 ] Responder Chain](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/ResponderChain.md)
 
-[ 20.04.12 ] SOLID Principle ( no md )
+[ 21.04.12 ] SOLID Principle ( no md )
 
-[[ 20.04.21 ] Swinject 사용하기](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/Swinject%20%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0.md)
+[[ 21.04.21 ] Swinject 사용하기](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/Swinject%20%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0.md)
+
+[[ 21.05.04 ] IntrinsicSize&CHCRPriorities](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/IntrinsicSize%26CHCRPriorities.md)
 
