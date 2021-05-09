@@ -32,16 +32,18 @@ intrinsicContentSize(이하 intrinsicSize)란 뷰가 가지고 있는 본연의 
 
 ## ContentHuggingPriority ( CH Priority )
 
-intrinsic Size 에 비해서 더 늘어나야 하는 경우에 사용합니다. 위의 이미지를 보면 hugging 이 Text를 감싸고 있는 것을 볼 수 있습니다. 따라서 양쪽에서 압력을 가하는 정도라고 해석하면 편합니다. 아래의 예제와 함께 설명하겠습니다.
+intrinsic Size 에 비해서 더 늘어나야 하는 경우에 사용합니다. 위의 이미지를 보면 hugging 이 Text를 감싸고 있는 것을 볼 수 있습니다. 따라서 양쪽에서 압력을 가하는 정도 혹은 압력을 가하는 정도라고 해석하면 편합니다. 아래의 예제와 함께 설명하겠습니다.
 
 ![](./images/intrinsic_priority_3.png)
 
-여기에 두개의 라벨이 있습니다. 이때 제목 라벨은 고정이고, 콘텐츠 라벨은 텍스트의 사이즈가 늘어날 수 있으며, 서로의 거리는 16 이상이 되어야 한다면 어떻게 해야할까요?
+여기에 두개의 라벨이 있습니다. 이때 (왼쪽)제목 라벨은 고정이고, (오른쪽)콘텐츠 라벨은 텍스트의 사이즈가 늘어날 수 있으며, 서로의 거리는 16 이상이 되어야 한다면 어떻게 해야할까요?
 
 1. 라벨간의 거리를 16으로 제약을 겁니다.
 2. 늘어나야하는 라벨 ( 콘텐츠 라벨 )의 contentHugging 을 고정된 라벨보다 낮게 측정합니다.
 
-1번을 진행한다면 레이아웃이 깨지는 현상을 확인할 수 있습니다. 왜냐하면 라벨들의 Intrinsic size로는 주어진 레이아웃을 만족할 수 없기 때문인데요. 따라서 width를 intrinsic size에 비해서 커야하기 때문에 오른쪽 라벨의 content hugging을 낮춰 이를 해결하였습니다.
+1번을 진행한다면 레이아웃이 깨지는 현상을 확인할 수 있습니다. 라벨들의 기본 intrinsicSize는 텍스트의 사이즈에 따라서 결정이 됩니다. 그렇기 때문에 적절한 텍스트를 적는다면 16의 제약을 만족할 수 있겠지만 위와 같은 일반적인 상황은 그렇지 않기 때문에 주어진 레이아웃을 만족하기는 어렵습니다.
+
+따라서 2번의 제약을 걸어야 합니다. 오른쪽에 content Hugging 을 낮춰 왼쪽에 비해 오른쪽이 양쪽에서 안아주는 압력이 낮아지도록 하여 크기를 상대적으로 커질 수 있도록 하는 것입니다. 이를 통해 오른쪽 라벨의 width를 intrinsicSize 보다 키워서 16의 제약조건을 만족할 수 있도록 하는 것입니다.
 
 ![](./images/intrinsic_priority_4.png)
 
@@ -49,27 +51,33 @@ intrinsic Size 에 비해서 더 늘어나야 하는 경우에 사용합니다. 
 
 ![](./images/intrinsic_priority_5.png)
 
-intrinsic Size 에 비해서 줄어 들어야 하는 경우 사용합니다. 만약 두개의 라벨의 intrinsic size가 너무 커서 레이아웃을 만족할 수 없다면 어떻게 될까요? 이런 경우에 사용하는 프로퍼티가 CompressionResistancePriority 입니다. 압축을 저항하는 정도로 해석하면 편합니다.
+intrinsicSize 에 비해서 줄어 들어야 하는 경우 사용합니다. 만약 두개의 라벨의 intrinsicSize가 너무 커서 레이아웃을 만족할 수 없다면 어떻게 될까요? 이런 경우에 사용하는 프로퍼티가 CompressionResistancePriority 입니다. 압축을 저항하는 정도로 해석하면 편합니다.
 
 ![](./images/intrinsic_priority_6.png)
 
-위에서 말한 상황과 동일한 경우를 재현하였습니다. 왼쪽 라벨의 경우 priorty가 749 이며, 오른쪽 라벨이 750 입니다. 따라서 압축을 저항하는 정도 ( Priority )가 왼쪽라벨이 더 낮기 때문에, 크기가 intrinsic size 보다 작아지게되어 왼쪽 라벨이 줄어들게 됩니다.
+위에서 말한 상황과 동일한 경우를 재현하였습니다. 양 라벨과의 거리 제약은 16이며 왼쪽 라벨의 사이즈를 작게하고 싶습니다. 이 경우 압축에 저항하는 정도를 낮춘다 > 더 압축된다 라고 생각하면 되기 때문에 왼쪽의 라벨의 compression Resistance 를 낮추면 해결될 것 같습니다. 왼쪽 라벨의 경우 priorty가 749 이며, 오른쪽 라벨이 750 입니다. 따라서 압축을 저항하는 정도 ( compression Resistance ) 가 왼쪽라벨이 더 낮기 때문에, 크기가 intrinsicSize 보다 작아지게되어 왼쪽 라벨이 줄어들게 됩니다.
 
 
 
-## CHCR Priorities
+## CHCR Priorities ( ContentHugging & CompressionResistance )
 
-그렇다면 이 두개를 동시에 사용하는 일이 있을까요? 네 있습니다. 위에서도 설명했듯이 CHCR Priority 는 intrinsic size 를 기준으로 합니다. 따라서 상황에 따라서는 두가지를 모두 정확하게 작성을 해야 어느 텍스트가 들어오더라도 의도된 UI가 나올 것입니다.
+그렇다면 이 두개를 동시에 사용하는 일이 있을까요? 네 있습니다. 위에서도 설명했듯이 CHCR Priority 는 intrinsicSize 를 기준으로 합니다. 따라서 상황에 따라서는 두가지를 모두 정확하게 작성을 해야 어느 텍스트가 들어오더라도 의도된 UI가 나올 것입니다.
 
 ![](./images/intrinsic_priority_7.png)
 
-CompressionResistancePriority를 설정한 예제에서 오른쪽 라벨의 intrinsic 사이즈만 줄인 경우입니다. 보시다시피 레이아웃이 시스템에 적절하지 않습니다. 이유는 ContentHuggingPriority가 동일하기 때문에 어떤 라벨의 사이즈를 더 키워야 할지 모르기 때문입니다.
+CompressionResistancePriority를 설정한 예제에서 오른쪽 라벨의 intrinsic 사이즈만 줄인 경우입니다. 보시다시피 레이아웃이 시스템에 적절하지 않습니다. 이유는 ContentHuggingPriority가 동일하기 때문에 어떤 라벨의 사이즈를 더 키워야 할지 시스템에서는 모르기 때문입니다.
 
-예시로 왼쪽의 라벨의 크기를 유동적으로 하는것으로 하겠습니다. 왼쪽 라벨의 CHPriority를 낮추는 경우 intrinsic size 가 슈퍼뷰를 넘어가지 않을때 왼쪽의 라벨이 커지게 되고, intrinsic Size 가 슈퍼뷰를 넘어가는 경우 왼쪽 라벨의 크기가 줄어들게 됩니다.
+예시로 왼쪽의 라벨의 크기를 유동적으로 하는것으로 하겠습니다. 왼쪽 라벨의 CHPriority를 낮추는 경우 intrinsicSize가 작아 제약조건을 만족하지 못할때 왼쪽의 라벨이 커지게 되고, intrinsicSize 가 커서 제약조건을 넘어가는 경우 왼쪽 라벨의 크기가 줄어들게 됩니다.
 
 ![](./images/intrinsic_priority_8.png)
 
 ![](./images/intrinsic_priority_9.png)
+
+
+
+## 마무리
+
+이렇게 ContenteHugging 그리고 CompressionResistance Priority 에 대해 알아봤습니다. 활용할 부분도 굉장히 많고 UI 디버깅을 진행하다보면 다른 부분에서도 Priority 가 많이 적용된 것을 확인할 수 있습니다. 관심있게 보신다면 좋은 UI 작성 방식이 될 것이라고 생각합니다.
 
 
 
