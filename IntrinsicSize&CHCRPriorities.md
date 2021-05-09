@@ -2,9 +2,9 @@
 
 글을 쓰다보니 존댓말을 쓰는 것이 조금 더 자연스러울 것 같아 이번 포스팅부터 존댓말을 쓰도록 하겠습니다 !
 
-UI를 그리다보면 어쩔수 없이 레이아웃이 겹치는 부분 혹은 겹치지 않는 부분이 생기거나, 그 두가지가 공존하는 경우가 생기고는 합니다. 특히 라벨 버튼 등등 변동되는 텍스트를 작업할 때는 이런 상황이 생길수 밖에 없습니다. 이때마다 CHCRPriorities (ContentHugging , CompressionResistance Priority )를 사용하고는 하는데 한끝차이면서 늘 헷갈린다는 생각이 들어 이번 기회에 정리하기로 하였습니다.
+UI를 그리다보면 어쩔수 없이 레이아웃이 겹치는 부분 혹은 겹치지 않는 부분이 생기거나, 그 두가지가 공존하는 경우가 생기고는 합니다. 특히 라벨 버튼 등등 변동되는 텍스트를 작업할 때는 이런 상황이 생길수 밖에 없습니다. 이때마다 CHCRPriorities (ContentHugging , CompressionResistance Priority )를 사용하고는 하는데 늘 헷갈려서 찾아보고는 했습니다. 그래서 이번 기회에 정리하는 것이 좋다는 생각이 들었습니다.
 
-핵심은 intrinsicContentSize( intrinsicSize ) 를 기준으로 생각하는 것이고 이보다 큰 경우를 대응하기 위해서는  contentHugging 을 설정하고, 이보다 작은 경우를 대응하기 위해서는 compresssion-resistance 를 설정하면 됩니다.
+핵심은 intrinsicContentSize( intrinsicSize ) 를 기준으로 생각하는 것이고 이보다 큰 경우를 대응하기 위해서는 contentHugging 을 설정하고, 이보다 작은 경우를 대응하기 위해서는 compresssionResistance 를 설정하면 됩니다.
 
  
 
@@ -51,7 +51,7 @@ intrinsic Size 에 비해서 더 늘어나야 하는 경우에 사용합니다. 
 
 ![](./images/intrinsic_priority_5.png)
 
-intrinsicSize 에 비해서 줄어 들어야 하는 경우 사용합니다. 만약 두개의 라벨의 intrinsicSize가 너무 커서 레이아웃을 만족할 수 없다면 어떻게 될까요? 이런 경우에 사용하는 프로퍼티가 CompressionResistancePriority 입니다. 압축을 저항하는 정도로 해석하면 편합니다.
+CompressionResistance는 intrinsicSize 에 비해서 줄어 들어야 하는 경우 사용합니다. 만약 두개의 라벨의 intrinsicSize가 너무 커서 레이아웃을 만족할 수 없다면 어떻게 될까요? 이런 경우에 사용하는 프로퍼티가 CompressionResistancePriority 입니다. 압축을 저항하는 정도로 해석하면 편합니다.
 
 ![](./images/intrinsic_priority_6.png)
 
