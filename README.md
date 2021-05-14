@@ -22,3 +22,5 @@
 
 [[ 21.05.04 ] IntrinsicSize&CHCRPriorities](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/IntrinsicSize%26CHCRPriorities.md)
 
+[[ 21.05.14 ] Escaping Closure](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/EscapingClosure.md)
+
