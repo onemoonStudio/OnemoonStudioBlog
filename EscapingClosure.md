@@ -1,6 +1,6 @@
 # Escaping Closure
 
-자주 사용하고 있지만 정확한 개념을 설명하기 어렵다는 생각이 들어서 이번 포스팅에서 한번 정리해보고자 합니다. 처음 Swift를 공부하던 시절에 제일 헷갈렸던 부분이었던 것 같습니다. escaping closure를 이해하기 위해서는 몇가지 개념을 미리 알고 있는 것이 편합니다. 비동기 코드를 쓰는 이유, scope의 개념, capturing values 를 먼저 설명한 뒤 escaping closure 그리고 이를 통해 생길 수 있는 strong reference cycle에 대해서 설명하도록 하겠습니다. 잘못된 부분이 있다면 댓글로 남겨주시면 감사하겠습니다!
+자주 사용하고 있지만 정확한 개념을 설명하기 어렵다는 생각이 들어서 이번 포스팅을 통해 정리하고자 합니다. 처음 Swift를 공부하던 시절에 제일 헷갈렸던 부분이었던 것 같습니다. escaping closure를 이해하기 위해서는 몇가지 개념을 미리 알고 있는 것이 좋습니다. 비동기 코드를 쓰는 이유, scope의 개념, capturing values 를 먼저 설명한 뒤 escaping closure 그리고 이를 통해 생길 수 있는 strong reference cycle에 대해서 간단하게 설명하도록 하겠습니다. 잘못된 부분이 있다면 댓글로 남겨주시면 감사하겠습니다!
 
 
 
@@ -24,17 +24,19 @@ func testEscaping(_ esClosure: @escaping (Data?) -> Void) {
 }	
 ```
 
-해당 코드를 실행해보면 session.dataTask ( Network )는 비동기 방식이기 때문에 실행이후, 응답을 기다리지 않고 hello가 찍힐 것입니다. 그 이후 네트워크를 통해 응답을 받게되면 world, update UI or Alert 가 찍히게 되겠죠. 이때 hello 가 찍히고 나서 응답이 올때까지 기다리는 동안에도 사용자는 앱을 동작시킬 수 있다는 것이 비동기의 큰 장점입니다. 이를 통해서 사용자의 경험을 높힐 수 있는 것입니다.
+해당 코드를 실행해보면 session.dataTask ( Network )는 비동기 방식이기 때문에 실행 이후, 네트워크의 응답을 기다리지 않고 hello가 찍힐 것입니다. 그 이후 네트워크를 통해 응답을 받게되면 world, update UI or Alert 가 찍히게 되겠죠. 이때 hello 가 찍히고 나서 응답이 올때까지 기다리는 동안에도 사용자는 앱을 동작시킬 수 있다는 것이 비동기의 큰 장점입니다. 이를 통해서 사용자의 경험을 높힐 수 있기 때문입니다.
 
-요청 > 사용자 행동 ( 사용자 경험 Good ) > 응답 > 내부 동작
+< 비동기 방식 : 요청 - 사용자 행동 ( 사용자 경험 Good ) - 응답 - 내부 동작 >
 
-반대로 네트워크가 동기적으로 작동한다면 어떻게 될까요? 요청을 하고 응답을 하는 시간이 2초가 걸린다고 할때, 2초동안 사용자가 어떠한 동작도 하지 못한다면 사용자의 경험을 해칠 수 있습니다.
+반대로 네트워크가 동기적으로 작동한다면 어떻게 될까요? 만약 네트워크가 느려서 응답을 받을 때까지 2초라는 시간이 걸린다고 생각을 해보겠습니다. 사실상 모바일 앱을 사용하면서 2초라는 시간은 굉장히 길고 2초동안 사용자가 어떠한 동작도 하지 못한다면 사용자의 경험을 해칠 수 있습니다.
 
-요청 > 기다림 ( freezing , 사용자 경험 Bad ) > 응답 > 내부동작 
+< 동기 방식 : 요청 - 기다림 ( freezing , 사용자 경험 Bad ) - 응답 - 내부동작 >
+
+
 
 ## Scope
 
-Scope는 크게 global scope, local scope 2가지로 나누어집니다. global scope에 대한 자세한 내용은 [여기](https://andybargh.com/lifetime-scope-and-namespaces-in-swift/#Scope)에서 확인하는 것을 추천합니다. 예제를 통해서 local scope인 함수의 스코프에 대해서 설명을 드리겠습니다.
+Scope는 크게 global scope, local scope 2가지로 나누어집니다. global scope에 대한 자세한 내용은 [여기](https://andybargh.com/lifetime-scope-and-namespaces-in-swift/#Scope)에서 확인하는 것을 추천합니다. 예제를 통해서 local scope인 함수의 스코프에 대해서 간단하게 설명을 드리겠습니다.
 
 ```swift
 func someFunc() -> Int {
@@ -46,13 +48,15 @@ someFunc()
 
 ```
 
- someFunc 라는 함수가 있습니다. 그리고 내부에 hello 라는 변수가 있습니다. 일반적으로 함수의 스코프라 함은 함수의 바디 즉 { 부터 } 까지를 의미합니다. 해당 스코프는 함수가 실행될 때 활성화되며, 리턴이 되면 해당 스코프 내부에 있는 변수들은 소멸됩니다. 함수의 바깥에서는 해당 변수를 접근할 수 없으며, 따라서 리턴이 되면( 함수의 실행이 끝나면 ) 가지고 있을 필요가 없기 때문입니다. 이런 메커니즘을 가진 것이 local scope이며, 내부의 변수를 local variable 이라고 합니다.
+ someFunc 라는 함수가 있습니다. 그리고 내부에 hello 라는 변수가 있습니다. 일반적으로 함수의 스코프라 함은 함수의 바디 즉 { 부터 } 까지를 의미합니다. 해당 스코프는 함수가 실행될 때 활성화되며, 리턴이 되면 해당 스코프 내부에 있는 변수들은 소멸됩니다. 함수가 실행될 때에만 필요한 변수들은 실행 이후 리턴이 되는 순간 가지고 있을 필요가 없기 때문입니다. 이런 메커니즘을 가진 것이 local scope이며, 내부의 변수를 local variable 이라고 합니다.
 
-하지만 local variable이 이런 local scope를 무시하고 <u>계속 참조되는 것 처럼 보이는</u> 예외의 경우가 있는데, 이 경우는 아래에서 설명하는 capturing values 를 통해서 이루어집니다.
+하지만 local variable이 이런 local scope를 무시하고 클로저에서 <u>계속 참조되는 것 처럼 보이는</u> 예외의 경우가 있는데, 이 경우는 아래에서 설명하는 capturing values 를 통해서 이루어집니다.
+
+
 
 ## capturing values
 
-문서를 먼저 확인해보겠습니다. 
+클로저를 실행할 때 필요한 변수들을 따로 캡쳐합니다. 문서를 한번 확인해보겠습니다. 
 
 
 
@@ -63,6 +67,7 @@ someFunc()
 요약하자면 클로저는 주변에 있는 변수를 참조할 수 있으며, original scope 를 무시한다고 합니다. 즉, 기존의 스코프와 관계없이 클로저만의 변수를 갖고 있다고 생각하면 됩니다. 문서의 예제를 보며 설명드리겠습니다.
 
 ```swift
+// 1번 예제
 func makeIncrementer(forIncrement amount: Int) -> () -> Int {
     var runningTotal = 0
   
@@ -96,13 +101,14 @@ makIncrementer 함수 내부에 incrementer 함수만 살펴보면 runningTotal 
 하지만 변수가 공유되는 경우 또한 존재합니다. 아래의 예제를 살펴보겠습니다.
 
 ```swift
+// 2번 예제
 class ClosureTestManager {   
-    var resultValue = 0
+    var runningTotal = 0
     
     func add(_ amount: Int) -> () -> Int {
         return {
-            self.resultValue += amount
-            return self.resultValue
+            self.runningTotal += amount
+            return self.runningTotal
         }
     }
 }
@@ -121,21 +127,25 @@ addTen()
 
 ```
 
-상단의 예제는 캡쳐된 값들이 value type 이지만, 하단의 예제처럼 reference type을 캡쳐한 경우에는 공유가 됩니다. 결과에서 보이다시피 addThree() 를 실행시킨 경우 0 + 3 이 아닌 기존에 더해진 10 + 3 이 되어 13 이 리턴되는 것을 확인할 수 있습니다. 따라서 클로저에서 값을 사용하는 경우에는 어떤 타입의 값을 캡쳐하는지 유의해서 작성을 해야 한다는 것을 알아두시길 바랍니다.
+결과에서 보이다시피 addThree() 를 실행시킨 경우 0 + 3 이 아닌 기존에 더해진 10 + 3 이 되어 13 이 리턴되는 것을 확인할 수 있습니다. 1번 예제에서는  runningTotal이 서로 공유되지 않았지만, 2번 예제에서는 서로 공유가 되어 결과가 다른 것을 확인할 수 있습니다. 
+
+이유는 reference type인 ClosureTestManager 의 인스턴스의 변수를 캡쳐했기 때문입니다. 단순히 값 타입을 복사한 경우는 새로운 복사본이 할당되어 사용할 수 있지만, reference type은 reference count를 증가시키면서 인스턴스의 주소를 가져옵니다. 따라서 동일한 주소의 변수를 접근하기 때문에 서로 공유가 되어 결과가 다른 것입니다. 따라서 클로저에서 값을 사용하는 경우에는 어떤 타입의 값을 캡쳐하는지 유의해서 작성을 해야 한다는 것을 알아두시길 바랍니다. 
+
+
 
 ## escaping closures
 
-먼저 문서를 한번 살펴보겠습니다. 정의는 이렇게 나와있습니다.
+위의 내용들을 파악하고 이 부분을 읽는다면 큰 무리가 없을 것이라 예상됩니다. 먼저 문서를 한번 살펴보겠습니다. 정의는 이렇게 나와있습니다.
 
 **A closure is said to *escape* a function when the closure is passed as an argument to the function, but is called after the function returns.** 
 
-인자로 전달받은 함수 중 함수의 리턴 이후에 실행할 수 있는 함수가 escaping closure 이다. 쉽게 말해 함수의 리턴 이후 실행할 수 있는 함수이다. 라고 이해하시면 될 것 같습니다. 계속해서 문서를 보겠습니다.
+인자로 전달받은 함수 중 함수의 리턴 이후에 실행할 수 있는 함수가 escaping closure 이다. 쉽게 말해 **함수의 리턴 이후 실행할 수 있는 함수**이다. 라고 이해하시면 될 것 같습니다. 계속해서 문서를 보겠습니다.
 
 One way that a closure can escape is by being stored in a variable that’s defined outside the function. As an example, many functions that start an asynchronous operation take a closure argument as a completion handler. **The function returns after it starts the operation, but the closure isn’t called until the operation is completed—the closure needs to escape, to be called later**
 
 바깥의 변수에 의해서 클로저가 저장되는 경우에 closure는 escape를 할 수 있다고 하네요. 대표적으로 사용하는 예시로는 비동기 작업을 하는 경우 completion handler로 escaping closure 를 사용하는 것을 확인할 수 있습니다. 작업이 시작되면 함수가 리턴되지만 클로저는 작업이 끝날 때 까지 호출되지 않습니다. 그리고 이 클로저를 나중에 호출하기 위해서 escape가 필요합니다.
 
-여기서 escape의 의미를 생각해봐야합니다. 어디에서 탈출하는 걸까요? 함수의 스코프에서 탈출한다고 이해하면 좋을 것 같습니다. 함수가 리턴이 되면 일반적으로 해당 스코프는 사라지게 됩니다. 더 이상 접근할 수 없는 상태가 되는 것이죠. 하지만 상황에 따라서( 대표적으로 비동기 작업이 끝나는 경우 ) 사라진 스코프 내부에서 정의한 클로저를 실행시켜야 할 때가 있습니다. 이때 실행되는 이 클로저를 escaping closure 라고 하는 것입니다.
+여기서 escape의 의미를 생각해봐야합니다. 어디에서 탈출하는 걸까요? 함수의 스코프에서 탈출한다고 이해하면 좋을 것 같습니다. 함수가 리턴이 되면 일반적으로 해당 스코프는 사라지게 됩니다. 더 이상 접근할 수 없는 상태가 되는 것이죠. 하지만 비동기 작업이 끝나고 실행되어야 하는, 예외 상황에서는 사라진 스코프 내부에서 클로저를 실행시켜야 할 때가 있습니다. 이때 실행되는 이 클로저를 escaping closure 라고 하는 것입니다.
 
 ```swift
 func testEscaping(_ esClosure: @escaping (Int) -> Void) { 
@@ -152,13 +162,23 @@ func testEscaping(_ esClosure: @escaping (Int) -> Void) {
 
 대표적인 예제를 하나 살펴보겠습니다. testEscaping를 살펴보면 내부에서 asyncronous operation 인 dataTask가 있습니다. 그리고 dataTask의 completion Hanlder 에서 esClosure를 사용하는 것을 확인할 수 있습니다. testEscaping을 외부에서 실행하는 순간 "hello"가 로그로 찍히고 내부의 스코프는 접근할 수 없지만, dataTask 작업이 끝나고 completionHandler 가 실행되며 "wolrd" 가 로그에 찍히고 esClosure 가 캡쳐된 인자와 함께 실행되는 것을 확인할 수 있을 것입니다.
 
+
+
 ## Strong reference cycle for Closures
 
 여태까지 escaping closure가 무엇인지, 어떻게 실행되는지, 왜 사용해야 하는지 등을 알아봤습니다. 하지만 escaping closure 뿐만 아니라 closure 자체를 사용할 때 주의해야할 점이 있는데, reference Value 를 캡쳐하게 될 때 Strong Reference Cycle 이 생길 수 있다는 점입니다. 
 
-ARC 를 살펴보면 reference Type 의 값은 참조가 되는 경우 reference count 가 증가하고 0 이 될때 비로소 사라지게 됩니다. capturing values 또한 마찬가지로 변수에 값을 할당하는 것입니다. 이때 만약 self 에서 해당 클로저를 참조하고 클로저에서 self 를 참조하는 경우에 Strong Reference Cycle 이 생겨 인스턴스가 사라지지 않는 경우가 생길 수 있습니다. 이런 경우를 조심하고 Capture List 를 선언하여 이를 방지해야합니다.
+ARC 를 살펴보면 reference Type 의 값은 참조가 되는 경우 reference count 가 증가하고 참조가 필요없는 경우는 count가 감소하며, 0 이 될때 인스턴스가 사라지게 됩니다. capturing values 또한 마찬가지로 변수에 값을 할당하는 것입니다. 이때 만약 self 에서 해당 클로저를 참조하고 클로저에서 self 를 참조하는 경우에 Strong Reference Cycle 이 생겨 인스턴스가 사라지지 않는 경우가 생길 수 있습니다. 이런 경우를 조심하고 Capture List 를 선언하여 이를 방지해야합니다. 
 
 이 포스트에서 정리를 하려고 했으나, 내용이 너무 길어질 것 같아서 관련된 ARC의 개념을 한번 정리를 한 다음 링크를 걸도록 하겠습니다. 자세한 내용을 알고싶다면 하단의 Strong Reference Cycle 관련 레퍼런스를 넣었으니 확인하시기를 바랍니다.
+
+
+
+## 마무리
+
+연관된 개념들을 하나씩 간단하게 정리를 하였습니다. 요약을 하자면 Escaping Closure는 함수가 리턴된 이후에 실행되는 함수 로써 이해를 하면 됩니다. 그리고 해당 클로저가 필요한 이유는 비동기, 스코프 등의 한계를 깨기 위해서 라고 생각합니다. 또한 내부의 동작은 capturing values 라는 개념이 존재했기 때문에 가능했다고 생각하면 될 것 같습니다. 
+
+문서를 최대한 참고하였으며, 설명이 부족하거나 이해가 안되는 부분은 직접 확인하시는 것이 제일 좋습니다. 혹여나 제가 잘못 알고 있는 부분이 있거나 전달이 부족한 부분이 있다면 댓글 부탁드립니다. 감사합니다!
 
 
 
