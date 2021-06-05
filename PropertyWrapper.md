@@ -228,15 +228,89 @@ print(someStructure.$someNumber)
 
 
 
+---
+
+위에서는 문서를 읽으면서 개념을 살펴봤습니다. 그렇다면 이런 프로퍼티 래퍼를 어떻게 사용하는지 그리고 왜 사용하는지에 대해서 한번 알아보겠습니다. 예시는 이 문서를 참고하여 작성하였습니다.
+
+### User Default
+
+사실 처음 이 프로퍼티의 개념을 공부하고 나서 User Default 를 PropertyWrapper를 통해 사용한다면  정말 편하겠다는 생각을 했습니다. 마침 swift-evolution 문서에도 이 방식으로 example을 제안한 것을 확인할 수 있었습니다. 값을 추출하는 방식과 값을 저장하는 방식을 미리 정의하고 이를 사용한다면 자동으로 User Default 에 원하는 값이 저장되고 추출 될 것입니다. 아래는 문서에서의 예시 입니다.
+
+```swift
+@propertyWrapper
+struct UserDefault<T> {
+  let key: String
+  let defaultValue: T
+  
+  var wrappedValue: T {
+    get {
+      return UserDefaults.standard.object(forKey: key) as? T ?? defaultValue
+    }
+    set {
+      UserDefaults.standard.set(newValue, forKey: key)
+    }
+  }
+}
+
+enum GlobalSettings {
+  @UserDefault(key: "FOO_FEATURE_ENABLED", defaultValue: false)
+  static var isFooFeatureEnabled: Bool
+  
+  @UserDefault(key: "BAR_FEATURE_ENABLED", defaultValue: false)
+  static var isBarFeatureEnabled: Bool
+}
+
+```
+
+먼저 예시에서 보이는 것 처럼 Property Wrapper 는 제네릭으로도 사용이 가능합니다. 또한 필요한 부분들을 할당하지 않고 initializer 처럼 생성할 수 있습니다. 따라서 User Default 에 접근하기 위한 key 그리고 만약 값이 존재하지 않은 경우 defulatValue를 생성시에 받는 것을 확인할 수 있습니다. get 구문에 의해서 어떤 key의 값을 가져올 때 UserDefault 를 확인하고 만약 값이 nil이라면 defaultValue를 리턴하는 것을 확인할 수 있으며, set에 의해서 propertyWrapper 를 변경해준다면 해당 값이 UserDefault 에 저장되는 것을 확인할 수 있습니다.
 
 
 
+하단 예시에는 Bool 값을 FOO_FEATURE_ENABLED, BAR_FEATURE_ENABLED 키를 통해서 UserDefault에 접근하는 것을 확인할 수 있습니다.
+
+### Delayed Initialization
+
+Swift 에서는 Lazy 라는 키워드가 있습니다. 해당 키워드를 변수에 사용하게 되면 해당 값이 불릴 때 비로소 값이 할당되도록 하는 키워드 입니다. 보통 클래스 혹은 struct 에서 다른 프로퍼티를 참고하여 값을 할당해야 하는 경우 사용하게 됩니다. 해당 객체는 아직 생성되지 않았기 때문에 프로퍼티를 만드는 당시에 다른 프로퍼티를 참고할 수 없습니다. 따라서 Lazy 를 이용해 객체가 생성된 이후 시점에서 해당 값을 사용하는 로직을 위해 사용합니다.
 
 
 
+이런 방식을 Property Wrapper 를 통해서도 구현이 가능합니다. 일단 프로퍼티와 타입을 정의해 놓고 값은 나중에 할당하는 방식입니다. 아래의 예시를 보겠습니다.
+
+```swift
+@propertyWrapper
+struct DelayedMutable<Value> {
+  private var _value: Value? = nil
+
+  var wrappedValue: Value {
+    get {
+      guard let value = _value else {
+        fatalError("property accessed before being initialized")
+      }
+      return value
+    }
+    set {
+      _value = newValue
+    }
+  }
+
+  /// "Reset" the wrapper so it can be initialized again.
+  mutating func reset() {
+    _value = nil
+  }
+}
+
+// 이렇게만 선언해도 컴파일 에러가 발생하지 않습니다.
+@DelayedMutable var hello: String
+
+```
+
+물론 DelayedMutable를 사용한다면 예상치 못한 경우 fatalError 가 발생할 수 있기 때문에 이를 Lazy 대신에 사용하는 것은 좋지 않은 방법입니다. 여기에서는 Lazy 또한 이런식으로 구현할 수 있겠구나 라고 생각하시면 될 것 같습니다. 또한 문서에 DelayedImmutable 이라는 PropertyWrapper 가 있는데 흥미로운 방식이니 이를 참고하시는 것도 좋을 것 같습니다.
 
 
 
+## 마무리
+
+PropertyWrapper 를 간단하게 알아봤습니다. 우리가 모듈이나 별도의 로직이 들어간 함수를 만들어 여러 곳에서 사용하는 것 처럼, Property Wrapper 또한 프로퍼티를 위한 함수라고 생각해도 될 것 같습니다. 이를 활용해서 다양한 방식으로 코드의 중복을 낮추고 효율을 높히셨으면 좋겠습니다.
 
 
 
