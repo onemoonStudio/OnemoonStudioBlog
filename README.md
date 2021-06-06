@@ -24,3 +24,5 @@
 
 [[ 21.05.14 ] Escaping Closure](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/EscapingClosure.md)
 
+[[ 21.06.06 ] Property Wrapper](https://github.com/onemoonStudio/OnemoonStudioBlog/blob/main/PropertyWrapper.md)
+
