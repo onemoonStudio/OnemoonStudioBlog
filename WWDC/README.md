@@ -32,5 +32,7 @@ WWDC 를 보고 하나씩 정리하는 공간입니다. 블로그에 정리하�
 
 ## WWDC 21
 
-[[ 21 - 10132 ] Meet async/await in Swift]()
+[[ 21 - 10132 ] Meet async/await in Swift](https://onemoonstudio.tistory.com/16)
+
+[[ 21 - 10216 ] WWDC21 - ARC in Swift : Basics and beyond ](https://onemoonstudio.tistory.com/17)
 
